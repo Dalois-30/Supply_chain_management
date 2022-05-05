@@ -1,0 +1,15 @@
+{
+  "name": "src",
+  "version": "1.0.0",
+  "description": "node js of the supply chain management project",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "none"
+  },
+  "author": "Nuenang Tapi Claude Dalois",
+  "license": "ISC"
+}
