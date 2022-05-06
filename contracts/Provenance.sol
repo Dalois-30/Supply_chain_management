@@ -28,25 +28,19 @@ contract Provenance {
         _;
     }
     // function for producer to add their details to database
-    function addProducer(string memory _name, uint _phoneNo, string memory _cityState, string memory _country) public returns (bool success) {
-    // don't overwrite existing entries and ensure name isn't null
-        if (bytes(producers[msg.sender].name).length == 0 && bytes(_name).length != 0) {
-            producers[msg.sender].name = _name;
-            producers[msg.sender].phoneNo = _phoneNo;
-            producers[msg.sender].cityState = _cityState;
-            producers[msg.sender].country = _country;
-            producers[msg.sender].certified = false;
-            return true;
-        }
-        else {
-            return false; // either entry already exists or name entered was null
-        }
+    function addProducer(string memory _name, uint _phoneNo, string memory _cityState, string memory _country) public  {
+        // don't overwrite existing entries and ensure name isn't null
+        require (bytes(producers[msg.sender].name).length == 0 && bytes(_name).length != 0,
+                 "either entry already exists or name entered was null"); 
+        producers[msg.sender].name = _name;
+        producers[msg.sender].phoneNo = _phoneNo;
+        producers[msg.sender].cityState = _cityState;
+        producers[msg.sender].country = _country;
+        producers[msg.sender].certified = false; 
     }
     // function to remove producer from database (can only be done by dmin)
-    function removeProducer(address _producer) onlyAdmin public returns (bool
-        success) {
+    function removeProducer(address _producer) onlyAdmin public {
         delete producers [_producer];
-        return true;
     }
     // function to display details of producer
     function findProducer(address _producer) public view returns (string memory, uint, string memory, string memory, bool) {
@@ -67,17 +61,13 @@ contract Provenance {
         return true;
     }
     // function for producer to add their product to database
-    function addProduct(string memory serialNo, uint[] memory _locationData) public returns (bool success) {
+    function addProduct(string memory serialNo, uint[] memory _locationData) public {
         // ensure no duplicate serial numbers and serial number isn't null
-        if (products[serialNo].producer == address(0) && bytes(serialNo).length != 0) {
-            products [serialNo].producer = msg.sender;
-            products[serialNo].locationData = _locationData;
-            products[serialNo].timeStamp = block.timestamp;
-            return true;
-        }
-        else {
-            return false; // either serial number already in use or serial number entered was null
-        }
+        require(products[serialNo].producer == address(0) && bytes(serialNo).length != 0, 
+            "either serial number already in use or serial number entered was null");
+        products [serialNo].producer = msg.sender;
+        products[serialNo].locationData = _locationData;
+        products[serialNo].timeStamp = block.timestamp;
     }
     // function to remove product from database (can only be done by admin)
     function removeProduct(string memory serialNo) onlyAdmin public returns (bool success) {
