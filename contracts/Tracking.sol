@@ -13,6 +13,7 @@ contract Tracking {
     mapping (address => uint) totalShipped; // total number of shipments made
     mapping (address => uint) successShipped; // number of shipments successfully completed
     struct Shipment {
+        string trackingNo;
         string item;
         uint quantity;
         uint[] locationData;
@@ -30,87 +31,92 @@ contract Tracking {
 
     // constructor - runs once when contract is deployed
     // determine initial token supply upon contract deployment
-    function Tracking(uint _initialTokenSupply) {
+    constructor(uint _initialTokenSupply) {
         admin = msg.sender;
         balances[admin] = _initialTokenSupply; // all tokens he ld by admin initially
     }
+       
     // modifier to allow only admin to execute a function
     modifier onlyAdmin() {
-        if (msg.sender != admin) throw;
+        require(msg.sender == admin, "Not the admin");
         _;
     }
     // function to send tokens from one account to another
-    function sendToken(address _from, address _to, uint _amount) returns (bool success) {
-        if (balances[_from] < _amount) {
-            Failure('Insufficient funds to send payment');
+    function sendToken(address _to, uint _amount) public returns (bool success) {
+        if (balances[msg.sender] < _amount) {
+            emit Failure('Insufficient funds to send payment');
             return false;
         }
-        balances[_from] -= _amount;
+        balances[msg.sender] -= _amount;
         balances[_to] += _amount;
-        Payment('Payment sent', _from, _to, _amount);
+        emit Payment('Payment sent', msg.sender, _to, _amount);
         return true;
     }
     // function to show token balance of an account
-    function getBalance(address _account) constant returns (uint _balance) {
+    function getBalance(address _account) public view returns (uint _balance) {
         return balances[_account];
     }
     // function to recover tokens from an account (can only be done by admin)
     // in the event that the sendToken function gets abused
-    function recoverToken(address _from, uint _amount) onlyAdmin returns (bool success) {
+    function recoverToken(address _from, uint _amount) onlyAdmin public returns (bool success) {
         if (balances[_from] < _amount) {
-            Failure('Insufficient funds for recovery');
+            emit Failure('Insufficient funds for recovery');
             return false;
         }
         balances[_from] -= _amount;
         balances[msg.sender] += _amount;
-        Payment('Funds recovered', _from, msg.sender, _amount);
+        emit Payment('Funds recovered', _from, msg.sender, _amount);
         return true;
     }
     // function to set contract parameters for next leg of shipment (can only be done by admin)
-    function setContractParameters(uint[] _location, uint _leadTime, uint _payment) onlyAdmin returns (bool success) {
+    function setContractParameters(uint[] memory _location, uint _leadTime, uint _payment) onlyAdmin public returns (bool success) {
         contractLocation = _location; // set next location that will receive shipment
         contractLeadTime = _leadTime; // set acceptable lead time for next leg of shipment
         contractPayment = _payment; // set payment amount for completing next leg of shipment
         return true;
     }
     // function for party to input details of shipment that was sent
-    function sendShipment(string trackingNo, string _item, uint _quantity, uint[] _locationData) returns (bool success) {
+    function sendShipment(string memory trackingNo, string memory _item, uint _quantity, uint[] memory _locationData) public returns (bool success) {
+        // require (contractLocation[0] != 0 || contractLocation[1] != 0 && contractLeadTime != 0 && contractPayment != 0, "Set all the contract Parameters");
+        require(bytes(shipments[trackingNo].trackingNo).length == 0, "Shipment traking num already exist");
+        shipments[trackingNo].trackingNo = trackingNo;
         shipments[trackingNo].item = _item;
         shipments[trackingNo].quantity = _quantity;
         shipments[trackingNo].locationData = _locationData;
         shipments[trackingNo].timeStamp = block.timestamp;
         shipments[trackingNo].sender = msg.sender;
         totalShipped[msg.sender] += 1;
-        Success('Item shipped', trackingNo, _locationData, block.timestamp, msg.sender);
+        emit Success('Item shipped', trackingNo, _locationData, block.timestamp, msg.sender);
         return true;
     }
     // function for party to input details of shipment that was received
-    function receiveShipment(string trackingNo, string _item, uint _quantity, uint[] _locationData) returns (bool success) {
+    function receiveShipment(string memory trackingNo, string memory _item, uint _quantity, uint[] memory _locationData) public returns (bool success) {
+        require (balances[msg.sender] >= contractPayment, "No enaugh money to complete this operation");
         // check that item and quantity received match item and quantity shipped
-        if (sha3(shipments[trackingNo].item) == sha3(_item) && shipments[trackingNo].quantity == _quantity) {
+        if (keccak256(bytes(shipments[trackingNo].item)) == keccak256(bytes(_item)) && shipments[trackingNo].quantity == _quantity) {
             successShipped[shipments[trackingNo].sender] += 1;
-            Success('Item received', trackingNo, _locationData, block.timestamp, msg.sender);
+            emit Success('Item received', trackingNo, _locationData, block.timestamp, msg.sender);
             // execute payment if item received on time and location correct
             if (block.timestamp <= shipments[trackingNo].timeStamp + contractLeadTime && _locationData[0] == contractLocation[0] && _locationData[1] == contractLocation[1]) {
-                sendToken(admin, shipments[trackingNo].sender, contractPayment);
+                sendToken(shipments[trackingNo].sender, contractPayment);
             }
             else {
-                Failure('Payment not triggered as criteria not met');
+                emit Failure('Payment not triggered as criteria not met');
             }
             return true;
         }
         else {
-            Failure('Error in item/quantity');
+            emit Failure('Error in item/quantity');
                 return false;
         }
     }
     // function to remove details of shipment from database (can only be done by admin)
-    function deleteShipment(string trackingNo) onlyAdmin returns (bool success) {
+    function deleteShipment(string memory trackingNo) onlyAdmin public returns (bool success) {
         delete shipments[trackingNo];
         return true;
     }
     // function to display details of shipment
-    function checkShipment(string trackingNo) constant returns (string, uint, uint[], uint, address) {
+    function checkShipment(string memory trackingNo) public view returns (string memory, uint, uint[] memory, uint, address) {
         return (
                 shipments[trackingNo].item, 
                 shipments[trackingNo].quantity, 
@@ -120,14 +126,13 @@ contract Tracking {
                 );
     }
     // function to display number of successfully completed shipments and total shipments for a party
-    function checkSuccess(address _sender) constant returns (uint, uint) {
+    function checkSuccess(address _sender) public view returns (uint, uint) {
         return (successShipped[_sender], totalShipped[_sender]);
     }
     // function to calculate reputation score of a party (percentage of successfully completed shipments)
-    function calculateReputation(address _sender) constant returns (uint) {
+    function calculateReputation(address _sender) public view returns (uint) {
         if (totalShipped[_sender] != 0) {
-            return (100 * successShipped[_sender]
-            totalShipped[_sender]);
+            return (100 * successShipped[_sender] / totalShipped[_sender]);
         }
         else {
             return 0;
