@@ -1,0 +1,27 @@
+{
+  "name": "supply_chain_management",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dalois-30/Supply_chain_management.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Dalois-30/Supply_chain_management/issues"
+  },
+  "dependencies": {
+    "@truffle/hdwallet-provider": "^2.0.8",
+    "dotenv": "^16.0.0"
+  },
+  "homepage": "https://github.com/Dalois-30/Supply_chain_management#readme"
+}
