@@ -1,9 +1,11 @@
 
 
-pragma solidity ^0.8.7;
+pragma solidity >=0.4.22 <0.9.0;
+pragma experimental ABIEncoderV2;
 
 // contract to allow supply chain parties to track shipment of goods and automatically execute payment in tokens
 contract Tracking {
+    
     address admin;
     uint[] contractLocation; // array containing lat & long
     uint contractLeadTime; // in seconds
@@ -12,6 +14,8 @@ contract Tracking {
     mapping (address => uint) balances;
     mapping (address => uint) totalShipped; // total number of shipments made
     mapping (address => uint) successShipped; // number of shipments successfully completed
+    string[] shipmentsByTrackingNo;
+
     struct Shipment {
         string trackingNo;
         string item;
@@ -19,6 +23,7 @@ contract Tracking {
         uint[] locationData;
         uint timeStamp;
         address sender;
+        bool received;
     }
     // events to display messages when certain transactions are executed
     event Success(string _message, string trackingNo, uint[]
@@ -31,9 +36,9 @@ contract Tracking {
 
     // constructor - runs once when contract is deployed
     // determine initial token supply upon contract deployment
-    constructor() {
+    constructor(uint _initialTokenSupply) public {
         admin = msg.sender;
-        balances[admin] = 1000000000; // all tokens he ld by admin initially
+        balances[admin] = _initialTokenSupply; // all tokens he ld by admin initially
     }
        
     // modifier to allow only admin to execute a function
@@ -85,6 +90,8 @@ contract Tracking {
         shipments[trackingNo].locationData = _locationData;
         shipments[trackingNo].timeStamp = block.timestamp;
         shipments[trackingNo].sender = msg.sender;
+        shipments[trackingNo].received = false;
+        shipmentsByTrackingNo.push(trackingNo);
         totalShipped[msg.sender] += 1;
         emit Success('Item shipped', trackingNo, _locationData, block.timestamp, msg.sender);
         return true;
@@ -92,9 +99,11 @@ contract Tracking {
     // function for party to input details of shipment that was received
     function receiveShipment(string memory trackingNo, string memory _item, uint _quantity, uint[] memory _locationData) public returns (bool success) {
         require (balances[msg.sender] >= contractPayment, "No enaugh money to complete this operation");
+        require (shipments[trackingNo].received == false);
         // check that item and quantity received match item and quantity shipped
         if (keccak256(bytes(shipments[trackingNo].item)) == keccak256(bytes(_item)) && shipments[trackingNo].quantity == _quantity) {
             successShipped[shipments[trackingNo].sender] += 1;
+            shipments[trackingNo].received = true;
             emit Success('Item received', trackingNo, _locationData, block.timestamp, msg.sender);
             // execute payment if item received on time and location correct
             if (block.timestamp <= shipments[trackingNo].timeStamp + contractLeadTime && _locationData[0] == contractLocation[0] && _locationData[1] == contractLocation[1]) {
@@ -113,7 +122,22 @@ contract Tracking {
     // function to remove details of shipment from database (can only be done by admin)
     function deleteShipment(string memory trackingNo) onlyAdmin public returns (bool success) {
         delete shipments[trackingNo];
+        // dlete entry from array and shorten array
+        for (uint i = 0; i < shipmentsByTrackingNo.length; i++) {
+            //keccak256(portcheck) == keccak256("signed")
+            if (keccak256(bytes(shipmentsByTrackingNo[i])) == keccak256(bytes(trackingNo))) {
+                for (uint index = i; index < shipmentsByTrackingNo.length - 1; index++) {
+                    shipmentsByTrackingNo[index] =
+                    shipmentsByTrackingNo[index + 1];
+                }
+                delete shipmentsByTrackingNo[shipmentsByTrackingNo.length - 1];
+                
+            }
+        }
         return true;
+    }
+    function allShipment() public view returns (string[] memory) {
+        return shipmentsByTrackingNo;
     }
     // function to display details of shipment
     function checkShipment(string memory trackingNo) public view returns (string memory, uint, uint[] memory, uint, address) {

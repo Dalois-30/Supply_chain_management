@@ -1,10 +1,13 @@
 
-pragma solidity ^0.8.7;
+pragma solidity >=0.4.22 <0.9.0;
+pragma experimental ABIEncoderV2;
 
 contract Provenance {
     address admin;
     mapping (address => Producer) producers;
     mapping (string => Product) products;
+    address[] producersByAddress; // Array of all producers' acconts
+    string[] productsBySerialNo;
 
     struct Producer {
         string name;
@@ -19,7 +22,7 @@ contract Provenance {
         uint timeStamp;
     }
     // constructor - runs once when contract is deployed
-    constructor() {
+    constructor() public {
         admin = msg.sender;
     }
     // modifier to allow only admin to execute a function
@@ -37,10 +40,22 @@ contract Provenance {
         producers[msg.sender].cityState = _cityState;
         producers[msg.sender].country = _country;
         producers[msg.sender].certified = false; 
+        producersByAddress.push(msg.sender);
     }
     // function to remove producer from database (can only be done by dmin)
     function removeProducer(address _producer) onlyAdmin public {
         delete producers [_producer];
+        // dlete entry from array and shorten array
+        for (uint i = 0; i < producersByAddress.length; i++) {
+            if (producersByAddress[i] == _producer) {
+                for (uint index = i; index < producersByAddress.length - 1; index++) {
+                    producersByAddress[index] =
+                    producersByAddress[index + 1];
+                }
+                delete producersByAddress[producersByAddress.length - 1];
+
+            }
+        }
     }
     // function to display details of producer
     function findProducer(address _producer) public view returns (string memory, uint, string memory, string memory, bool) {
@@ -55,6 +70,10 @@ contract Provenance {
             producers[_producer].country, producers[_producer].certified
             );
     }
+    // function to display all producers' accounts in database
+    function allProducers() public view returns (address[] memory) {
+        return producersByAddress;
+    }
     // function to certify producer as legitimate (can only be done by admin)
     function certifyProducer(address _producer) onlyAdmin public returns (bool success) {
         producers [_producer] .certified = true;
@@ -68,15 +87,32 @@ contract Provenance {
         products [serialNo].producer = msg.sender;
         products[serialNo].locationData = _locationData;
         products[serialNo].timeStamp = block.timestamp;
+        productsBySerialNo.push(serialNo);
     }
     // function to remove product from database (can only be done by admin)
     function removeProduct(string memory serialNo) onlyAdmin public returns (bool success) {
         delete products [serialNo];
+        // delete entry from array and shorten array
+        for (uint i = 0; i < productsBySerialNo.length; i++) {
+            //keccak256(portcheck) == keccak256("signed")
+            if (keccak256(bytes(productsBySerialNo[i])) == keccak256(bytes(serialNo))) {
+                for (uint index = i; index < productsBySerialNo.length - 1; index++) {
+                    productsBySerialNo[index] =
+                    productsBySerialNo[index + 1];
+                }
+                delete productsBySerialNo[productsBySerialNo.length - 1];
+                
+            }
+        }
         return true;
     }
     // function to display details of product
     function findProduct(string memory serialNo) public view returns (address, uint[] memory, uint) {
         return (products[serialNo].producer, products [serialNo] .locationData, products[serialNo] .timeStamp);
+    }
+    // function to displays all products
+    function allProducts() public view returns (string[] memory) {
+        return productsBySerialNo;
     }
 }
 

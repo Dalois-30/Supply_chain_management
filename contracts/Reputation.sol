@@ -1,6 +1,6 @@
 
 
-pragma solidity ^0.8.7;
+pragma solidity >=0.4.22 <0.9.0;
 
 import "./Tracking.sol";
 
@@ -21,7 +21,7 @@ contract Reputation {
         uint reputation;
     }
     // constructor - runs once when contract is deployed
-    constructor() {
+    constructor() public {
         admin = msg.sender;
     }
     // modifier to allow only admin to execute a function

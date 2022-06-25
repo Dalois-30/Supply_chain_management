@@ -1,5 +1,5 @@
 var Tracking = artifacts.require("Tracking");
 
 module.exports = function(deployer) {
-  deployer.deploy(Tracking);
+  deployer.deploy(Tracking, 100000);
 };

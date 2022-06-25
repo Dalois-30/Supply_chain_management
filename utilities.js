@@ -5,14 +5,8 @@ const TruffleContract = require('truffle-contract');
 const ProvenanceArtifact = require('./build/contracts/Provenance.json');
 const TrackingArtifact = require('./build/contracts/Tracking.json');
 const ReputationArtifact = require('./build/contracts/Reputation.json');
-
 // transformer ce fichier en une classe afin de pouvoir l'exporter facilement
-
 //const { ethers } = require("ethers");
-
-
-
-
 
 utility = {
 
@@ -53,10 +47,11 @@ utility = {
     
     // CONTRACT PROVENANCE
 
-    addProducer: async function(name, phoneNo, cityState, country) {
+    addProducer: async function(name, phoneNo, cityState, country, callback) {
+      utility.contracts.Provenance.setProvider(this.web3.currentProvider);
 
         var ProvenanceInstance;
-        self.web3.eth.getAccounts(function(error, accounts){
+        this.web3.eth.getAccounts(function(error, accounts){
             if (error) {
               console.log(error);
             }
@@ -69,16 +64,19 @@ utility = {
               // Execute adopt as a transaction by sending account
               return ProvenanceInstance.addProducer(name, phoneNo, cityState, country ,{from: account});
             }).then(function(result){
+              console.log(result);
+              callback(result);
               console.log("Producer successfull added to the blockchain");
             }).catch(function(err){
               console.log(err.message);
+              callback("ERROR 404")
             });
         });
     },
 
-    removeProducer: async function(address){
+    removeProducer: async function(address, callback){
         var ProvenanceInstance;
-        self.web3.eth.getAccounts(function(error, accounts){
+        this.web3.eth.getAccounts(function(error, accounts){
             if (error) {
               console.log(error);
             }
@@ -91,16 +89,19 @@ utility = {
               // Execute adopt as a transaction by sending account
               return ProvenanceInstance.removeProducer(address, {from: account});
             }).then(function(result){
+              console.log(result)
+              callback(result);
               console.log("Producer successfull removed to the blockchain");
             }).catch(function(err){
               console.log(err.message);
+              callback("ERROR 404")
             });
         });
     },
 
-    findProducer: async function(address){
+    findProducer: async function(address, callback){
         var ProvenanceInstance;
-        self.web3.eth.getAccounts(function(error, accounts){
+        this.web3.eth.getAccounts(function(error, accounts){
             if (error) {
               console.log(error);
             }
@@ -109,16 +110,47 @@ utility = {
               ProvenanceInstance = instance;
       
               // Execute adopt as a transaction by sending account
-              return ProvenanceInstance.findProducer(address).call();
+              return ProvenanceInstance.findProducer(address);
+            }).then(function(result){
+
+              console.log('producer');
+              result[1] = result[1].toNumber()
+              console.log(result);
+              callback(result);
             }).catch(function(err){
               console.log(err.message);
+              callback("ERROR 404")
             });
         });
     },
 
-    certifyProducer: async function(address){
+    allProducers: async function(callback){
+      var ProvenanceInstance;
+      this.web3.eth.getAccounts(function(error, accounts){
+          if (error) {
+            console.log(error);
+          }
+          
+          var account = accounts[0];
+          utility.contracts.Provenance.deployed().then(function(instance){
+            ProvenanceInstance = instance;
+    
+            // Execute adopt as a transaction by sending account
+            return ProvenanceInstance.allProducers();
+          }).then(function(result){
+            console.log("list of all producer");
+            console.log(result);
+            callback(result);
+          }).catch(function(err){
+            console.log(err.message);
+            callback("ERROR 404")
+          });
+      });
+    },
+
+    certifyProducer: async function(address, callback){
         var ProvenanceInstance;
-        self.web3.eth.getAccounts(function(error, accounts){
+        this.web3.eth.getAccounts(function(error, accounts){
             if (error) {
               console.log(error);
             }
@@ -129,15 +161,20 @@ utility = {
       
               // Execute adopt as a transaction by sending account
               return ProvenanceInstance.certifyProducer(address, {from: account});
+            }).then(function(result){
+              console.log("producer certified");
+              console.log(result);
+              callback(result);
             }).catch(function(err){
               console.log(err.message);
+              callback("ERROR 404")
             });
         });  
     },
 
-    addProduct : async function(seriaNo, locationData){
+    addProduct : async function(seriaNo, locationData, callback){
         var ProvenanceInstance;
-        self.web3.eth.getAccounts(function(error, accounts){
+        this.web3.eth.getAccounts(function(error, accounts){
             if (error) {
               console.log(error);
             }
@@ -148,15 +185,20 @@ utility = {
       
               // Execute adopt as a transaction by sending account
               return ProvenanceInstance.addProduct(seriaNo, locationData, {from: account});
+            }).then(function(result){
+              console.log("product added");
+              console.log(result);
+              callback(result);
             }).catch(function(err){
               console.log(err.message);
+              callback("ERROR 404")
             });
         });    
     },
 
-    removeProduct : function(seriaNo){
+    removeProduct : function(seriaNo, callback){
         var ProvenanceInstance;
-        self.web3.eth.getAccounts(function(error, accounts){
+        this.web3.eth.getAccounts(function(error, accounts){
             if (error) {
               console.log(error);
             }
@@ -167,15 +209,20 @@ utility = {
       
               // Execute adopt as a transaction by sending account
               return ProvenanceInstance.removeProduct(seriaNo, {from: account});
+            }).then(function(result){
+              console.log("product removed");
+              console.log(result);
+              callback(result);
             }).catch(function(err){
               console.log(err.message);
+              callback("ERROR 404")
             });
         });    
     }, 
 
-    findProduct: function(seriaNo){
+    findProduct: function(seriaNo, callback){
         var ProvenanceInstance;
-        self.web3.eth.getAccounts(function(error, accounts){
+        this.web3.eth.getAccounts(function(error, accounts){
             if (error) {
               console.log(error);
             }
@@ -185,18 +232,49 @@ utility = {
               ProvenanceInstance = instance;
       
               // Execute adopt as a transaction by sending account
-              return ProvenanceInstance.findProduct(seriaNo).call();
+              return ProvenanceInstance.findProduct(seriaNo);
+            }).then(function(result){
+              console.log("product");
+              result[1][0]=result[1][0].toNumber();
+              result[1][1]=result[1][1].toNumber();
+              result[2]=result[2].toNumber()
+              console.log(result);
+              callback(result);
             }).catch(function(err){
               console.log(err.message);
+              callback("ERROR 404")
             });
         });   
     },
 
+    allProducts: async function(callback){
+      var ProvenanceInstance;
+      this.web3.eth.getAccounts(function(error, accounts){
+          if (error) {
+            console.log(error);
+          }
+          
+          utility.contracts.Provenance.deployed().then(function(instance){
+            ProvenanceInstance = instance;
+    
+            // Execute adopt as a transaction by sending account
+            return ProvenanceInstance.allProducts();
+          }).then(function(result){
+            console.log("all products");
+            console.log(result);
+            callback(result);
+          }).catch(function(err){
+            console.log(err.message);
+            callback("ERROR 404")
+          });
+      });
+    },
+
     // CONTRACT TRACKING
 
-    sendToken: function(address, amount){
+    sendToken: function(address, amount, callback){
       var TrakingInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -207,15 +285,20 @@ utility = {
     
             // Execute adopt as a transaction by sending account
             return TrakingInstance.sendToken(address, amount, {from: account});
+          }).then(function(result){
+            console.log("Token send");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       }); 
     },
 
-    getBalance: function(address){
+    getBalance: function(address, callback){
       var TrakingInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -225,16 +308,22 @@ utility = {
             TrakingInstance = instance;
     
             // Execute adopt as a transaction by sending account
-            return TrakingInstance.getBalance(address).call();
+            return TrakingInstance.getBalance(address);
+          }).then(function(result){
+            console.log("balance");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       }); 
     },
 
-    getBalance: function(address){
+
+    recoverToken: function(address, amount, callback){
       var TrakingInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -245,35 +334,21 @@ utility = {
     
             // Execute adopt as a transaction by sending account
             return TrakingInstance.recoverToken(address, amount, {from: account});
+          }).then(function(result){
+            console.log("token recovered");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       });
     },
 
-    recoverToken: function(address, amount){
-      var TrakingInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
-          if (error) {
-            console.log(error);
-          }
-
-          var account = accounts[0];
-          utility.contracts.Tracking.deployed().then(function(instance){
-            TrakingInstance = instance;
-    
-            // Execute adopt as a transaction by sending account
-            return TrakingInstance.recoverToken(address, amount, {from: account});
-          }).catch(function(err){
-            console.log(err.message);
-          });
-      });
-    },
-
-    setContractParameters: function(location1, location2, leadTime, payment){
+    setContractParameters: function(location1, location2, leadTime, payment, callback){
       var location = [location1, location2];
       var TrakingInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -284,8 +359,13 @@ utility = {
     
             // Execute adopt as a transaction by sending account
             return TrakingInstance.setContractParameters(location, leadTime, payment, {from: account});
+          }).then(function(result){
+            console.log("parameters setted");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       });
     },
@@ -293,7 +373,7 @@ utility = {
     sendShipment: function(trackinNo, item, quantity, location1, location2){
       var TrakingInstance;
       var location = [location1, location2];
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -304,8 +384,13 @@ utility = {
     
             // Execute adopt as a transaction by sending account
             return TrakingInstance.sendShipment(trackinNo, item, quantity, location, {from: account});
+          }).then(function(result){
+            console.log("shipment send");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       });
     }, 
@@ -313,7 +398,7 @@ utility = {
     recieveShipment: function(trackinNo, item, quantity, location1, location2){
       var TrakingInstance;
       var location = [location1, location2];
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -324,15 +409,20 @@ utility = {
     
             // Execute adopt as a transaction by sending account
             return TrakingInstance.receiveShipment(trackinNo, item, quantity, location, {from: account});
+          }).then(function(result){
+            console.log("recive shipment");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       });
     },
 
     deleteShipment: function(trackinNo){
       var TrakingInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -343,15 +433,91 @@ utility = {
     
             // Execute adopt as a transaction by sending account
             return TrakingInstance.deleteShipment(trackinNo, {from: account});
+          }).then(function(result){
+            console.log("all products");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
+          });
+      });
+    },
+
+    checkShipment: function(trackingNo, callback){
+      var ProvenanceInstance;
+      this.web3.eth.getAccounts(function(error, accounts){
+          if (error) {
+            console.log(error);
+          }
+
+          var account = accounts[0];
+          utility.contracts.Provenance.deployed().then(function(instance){
+            ProvenanceInstance = instance;
+    
+            // Execute adopt as a transaction by sending account
+            return ProvenanceInstance.checkShipment(trackingNo);
+          }).then(function(result){
+            console.log("shipment");
+            console.log(result);
+            callback(result);
+          }).catch(function(err){
+            console.log(err.message);
+            callback("ERROR 404")
+          });
+      });   
+    },
+
+    checkSuccess: function(address, callback){
+      var ProvenanceInstance;
+      this.web3.eth.getAccounts(function(error, accounts){
+          if (error) {
+            console.log(error);
+          }
+
+          var account = accounts[0];
+          utility.contracts.Provenance.deployed().then(function(instance){
+            ProvenanceInstance = instance;
+          
+            // Execute adopt as a transaction by sending account
+            return ProvenanceInstance.checkSuccess(address);
+          }).then(function(result){
+            console.log("shipment");
+            console.log(result);
+            callback(result);
+          }).catch(function(err){
+            console.log(err.message);
+            callback("ERROR 404")
+          });
+      });   
+    },
+
+    allShipment: async function(callback){
+      var ProvenanceInstance;
+      this.web3.eth.getAccounts(function(error, accounts){
+          if (error) {
+            console.log(error);
+          }
+
+          utility.contracts.Provenance.deployed().then(function(instance){
+            ProvenanceInstance = instance;
+          
+            // Execute adopt as a transaction by sending account
+            return ProvenanceInstance.allShipment();
+          }).then(function(result){
+            console.log("all shipment");
+            console.log(result);
+            callback(result);
+          }).catch(function(err){
+            console.log(err.message);
+            callback("ERROR 404")
           });
       });
     },
 
     calculateReputation: function(address){
       var TrakingInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -372,7 +538,7 @@ utility = {
     // CONTRACT REPUTATION
     addSupplier: function(name, phoneNo, cityState, country, goodsType){
       var ReputationInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -391,7 +557,7 @@ utility = {
 
     removeSupplier: function(address){
       var ReputationInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -410,7 +576,7 @@ utility = {
 
     findSupplier: function(address){
       var ReputationInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -420,7 +586,7 @@ utility = {
             ReputationInstance = instance;
     
             // Execute adopt as a transaction by sending account
-            return ReputationInstance.findSupplier(address).call();
+            return ReputationInstance.findSupplier(address);
           }).catch(function(err){
             console.log(err.message);
           });
@@ -429,7 +595,7 @@ utility = {
     
     allSuppliers: function(){
       var ReputationInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -439,7 +605,7 @@ utility = {
             ReputationInstance = instance;
     
             // Execute adopt as a transaction by sending account
-            return ReputationInstance.allSupplier().call();
+            return ReputationInstance.allSupplier();
           }).catch(function(err){
             console.log(err.message);
           });
@@ -448,7 +614,7 @@ utility = {
 
     filterByGoodsType: function(goodsType){
       var ReputationInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -458,7 +624,7 @@ utility = {
             ReputationInstance = instance;
     
             // Execute adopt as a transaction by sending account
-            return ReputationInstance.filterByGoodsType(goodsType).call();
+            return ReputationInstance.filterByGoodsType(goodsType);
           }).catch(function(err){
             console.log(err.message);
           });
@@ -467,7 +633,7 @@ utility = {
 
     filterByReputation: function(reputation){
       var ReputationInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -477,7 +643,7 @@ utility = {
             ReputationInstance = instance;
     
             // Execute adopt as a transaction by sending account
-            return ReputationInstance.filterByReputation(reputation).call();
+            return ReputationInstance.filterByReputation(reputation);
           }).catch(function(err){
             console.log(err.message);
           });
@@ -486,7 +652,7 @@ utility = {
 
     checkReputation: function(address){
       var ReputationInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -496,7 +662,7 @@ utility = {
             ReputationInstance = instance;
     
             // Execute adopt as a transaction by sending account
-            return ReputationInstance.checkReputation(address).call();
+            return ReputationInstance.checkReputation(address);
           }).catch(function(err){
             console.log(err.message);
           });
@@ -505,7 +671,7 @@ utility = {
 
     updateReputation: function(){
       var ReputationInstance;
-      self.web3.eth.getAccounts(function(error, accounts){
+      this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
             console.log(error);
           }
@@ -515,7 +681,7 @@ utility = {
             ReputationInstance = instance;
     
             // Execute adopt as a transaction by sending account
-            return ReputationInstance.updateReputation({from : account}).call();
+            return ReputationInstance.updateReputation({from : account});
           }).catch(function(err){
             console.log(err.message);
           });
