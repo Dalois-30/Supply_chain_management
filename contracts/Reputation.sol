@@ -8,7 +8,7 @@ import "./Tracking.sol";
 contract Reputation {
     // call the Tracking contract at its deployed address
     // need to include Tracking contract code at the end
-    Tracking public track = Tracking(0xd9145CCE52D386f254917e481eB44e9943F39138);
+    Tracking public track = Tracking(0x2fDaB21688169bDd6557FC75AC3561d0142E219F);
     address admin;
     mapping (address => Supplier) suppliers;
     address[] suppliersByAddress; // array of all suppliers' accounts

@@ -515,7 +515,7 @@ utility = {
       });
     },
 
-    calculateReputation: function(address){
+    calculateReputation: function(address, callback){
       var TrakingInstance;
       this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
@@ -528,15 +528,20 @@ utility = {
     
             // Execute adopt as a transaction by sending account
             return TrakingInstance.calculateReputation(address, {from: account});
+          }).then(function(result){
+            console.log("calcul reputation");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       });
     },
    
 
     // CONTRACT REPUTATION
-    addSupplier: function(name, phoneNo, cityState, country, goodsType){
+    addSupplier: function(name, phoneNo, cityState, country, goodsType, callback){
       var ReputationInstance;
       this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
@@ -549,13 +554,18 @@ utility = {
     
             // Execute adopt as a transaction by sending account
             return ReputationInstance.addSupplier(name, phoneNo, cityState, country, goodsType, {from: account});
+          }).then(function(result){
+            console.log("supplier added");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       });
     },
 
-    removeSupplier: function(address){
+    removeSupplier: function(address, callback){
       var ReputationInstance;
       this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
@@ -568,13 +578,18 @@ utility = {
     
             // Execute adopt as a transaction by sending account
             return ReputationInstance.removeSupplier(address, {from: account});
+          }).then(function(result){
+            console.log("supplier removed");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       });
     }, 
 
-    findSupplier: function(address){
+    findSupplier: function(address, callback){
       var ReputationInstance;
       this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
@@ -587,13 +602,18 @@ utility = {
     
             // Execute adopt as a transaction by sending account
             return ReputationInstance.findSupplier(address);
+          }).then(function(result){
+            console.log("supplier");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       });
     }, 
     
-    allSuppliers: function(){
+    allSuppliers: function(callback){
       var ReputationInstance;
       this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
@@ -605,14 +625,19 @@ utility = {
             ReputationInstance = instance;
     
             // Execute adopt as a transaction by sending account
-            return ReputationInstance.allSupplier();
+            return ReputationInstance.allSuppliers();
+          }).then(function(result){
+            console.log("all suppliers");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       });
     },
 
-    filterByGoodsType: function(goodsType){
+    filterByGoodsType: function(goodsType, callback){
       var ReputationInstance;
       this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
@@ -625,13 +650,18 @@ utility = {
     
             // Execute adopt as a transaction by sending account
             return ReputationInstance.filterByGoodsType(goodsType);
+          }).then(function(result){
+            console.log("filter by good type");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       });
     }, 
 
-    filterByReputation: function(reputation){
+    filterByReputation: function(reputation, callback){
       var ReputationInstance;
       this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
@@ -644,13 +674,18 @@ utility = {
     
             // Execute adopt as a transaction by sending account
             return ReputationInstance.filterByReputation(reputation);
+          }).then(function(result){
+            console.log("filter by reputation");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       });
     },
 
-    checkReputation: function(address){
+    checkReputation: function(address, callback){
       var ReputationInstance;
       this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
@@ -663,13 +698,18 @@ utility = {
     
             // Execute adopt as a transaction by sending account
             return ReputationInstance.checkReputation(address);
+          }).then(function(result){
+            console.log("reputation");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       });
     },
 
-    updateReputation: function(){
+    updateReputation: function(callback){
       var ReputationInstance;
       this.web3.eth.getAccounts(function(error, accounts){
           if (error) {
@@ -682,8 +722,13 @@ utility = {
     
             // Execute adopt as a transaction by sending account
             return ReputationInstance.updateReputation({from : account});
+          }).then(function(result){
+            console.log("Reputation updated");
+            console.log(result);
+            callback(result);
           }).catch(function(err){
             console.log(err.message);
+            callback("ERROR 404")
           });
       });
     }

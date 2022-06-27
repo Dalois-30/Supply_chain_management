@@ -36,7 +36,8 @@ contract Tracking {
 
     // constructor - runs once when contract is deployed
     // determine initial token supply upon contract deployment
-    constructor(uint _initialTokenSupply) public {
+    constructor() public {
+        uint _initialTokenSupply = 1000000;
         admin = msg.sender;
         balances[admin] = _initialTokenSupply; // all tokens he ld by admin initially
     }
